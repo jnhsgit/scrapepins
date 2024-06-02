@@ -24,7 +24,6 @@ if not os.path.exists(f"{folder_name}"):
     print(f"{folder_name} folder has been created. Your images will be stored here.")
     os.makedirs(f"{folder_name}")
 
-
 def extract_alt_text(html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     img_tags = soup.find_all("img", src=True)
