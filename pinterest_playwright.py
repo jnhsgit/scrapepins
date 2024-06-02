@@ -1,21 +1,31 @@
 import time
-
+import os
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import Playwright, sync_playwright
 
 #Things we need to do:
-#1) Figure out how to take user input to search for images
-#2) Create a folder based off the image search, eg: 'red_car'
-#3) Create filenames based off the image search, eg: 'red_car_1.jpg'
-#4) Store the files in the folder
+#1) Exclude the tiny icon images in the results
+#2) Figure out a way to specify how many images we want, then get PlayWright
+# to scroll down the page to load more images before or while we grab their
+# img tags
+
+user_input_text = input("Enter your image selection: ")
+folder_name = user_input_text.replace(" ", "_")
+user_input_transformed = user_input_text.replace(" ", "%20")
+url = f"https://www.pinterest.com.au/search/pins/?q={user_input_transformed}"
+
+folder  = f"{folder_name}" 
+if not os.path.exists(f"{folder_name}"):
+    os.makedirs(f"{folder_name}")
+
 def extract_alt_text(html_content):
     soup = BeautifulSoup(html_content, "html.parser")
     img_tags = soup.find_all("img", src=True)
-    alt_texts = [img.get("src", "") for img in img_tags]
+    img_srcs = [img.get("src", "") for img in img_tags]
     #This line gets us the high resolution images
-    alt_texts = [sub.replace("236x", "736x") for sub in alt_texts]
-    return alt_texts
+    img_srcs = [sub.replace("236x", "736x") for sub in img_srcs]
+    return img_srcs
 
 
 def run(playwright: Playwright) -> None:
@@ -23,22 +33,23 @@ def run(playwright: Playwright) -> None:
     context = browser.new_context()
     page = context.new_page()
     page.goto(
-        "https://www.pinterest.com.au/search/pins/?q=2%20tier%20wedding%20cake%20blue"
+        url
     )
     page.wait_for_load_state()
     time.sleep(5)
     content = page.content()
-    alt_texts = extract_alt_text(content)
+    img_srcs = extract_alt_text(content)
     context.close()
     browser.close()
-    return alt_texts
+    return img_srcs
 
 
 with sync_playwright() as playwright:
-    alt_texts = run(playwright)
+    img_srcs = run(playwright)
 
-for img in alt_texts:
+for img in img_srcs:
     r = requests.get(img)
     filename = img.split("/")[-1]
-    with open(filename, "wb") as file:
+    filepath = os.path.join(folder, filename)
+    with open(filepath, "wb") as file:
         file.write(r.content)
