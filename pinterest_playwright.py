@@ -1,6 +1,6 @@
 import os
 import time
-
+from tqdm import tqdm
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import Playwright, sync_playwright
@@ -19,6 +19,7 @@ url = f"https://www.pinterest.com.au/search/pins/?q={user_input_transformed}"
 
 folder = f"{folder_name}"
 if not os.path.exists(f"{folder_name}"):
+    print(f"{folder_name} has been created. Your image will be stored here")
     os.makedirs(f"{folder_name}")
 
 
@@ -32,7 +33,8 @@ def extract_alt_text(html_content):
 
 
 def run(playwright: Playwright) -> None:
-    browser = playwright.chromium.launch(headless=False)
+    print("Opening Pinterest...")
+    browser = playwright.chromium.launch(headless=True)
     context = browser.new_context()
     page = context.new_page()
     page.goto(url)
@@ -43,6 +45,7 @@ def run(playwright: Playwright) -> None:
     time.sleep(5)
     content = page.content()
     img_srcs = extract_alt_text(content)
+    print("Image URL's extracted.")
     context.close()
     browser.close()
     return img_srcs
@@ -51,9 +54,11 @@ def run(playwright: Playwright) -> None:
 with sync_playwright() as playwright:
     img_srcs = run(playwright)
 
-for img in img_srcs:
+for img in tqdm(img_srcs):
     r = requests.get(img)
     filename = img.split("/")[-1]
     filepath = os.path.join(folder, filename)
     with open(filepath, "wb") as file:
         file.write(r.content)
+
+print(f"{user_input_text} images have been downloaded.")
