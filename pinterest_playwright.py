@@ -12,6 +12,7 @@ from playwright.sync_api import Playwright, sync_playwright
 
 user_input_text = input("Enter your image selection: ")
 folder_name = user_input_text.replace(" ", "_")
+#We replace the spaces with "%20" for the URL
 user_input_transformed = user_input_text.replace(" ", "%20")
 url = f"https://www.pinterest.com.au/search/pins/?q={user_input_transformed}"
 
@@ -36,6 +37,9 @@ def run(playwright: Playwright) -> None:
         url
     )
     page.wait_for_load_state()
+    #add a sleeper to give the page more time to load since 
+    #page.wait_for_load_state() doesn't seem to be sufficient
+    #sometimes.
     time.sleep(5)
     content = page.content()
     img_srcs = extract_alt_text(content)
