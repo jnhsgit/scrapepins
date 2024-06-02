@@ -1,9 +1,10 @@
 import os
 import time
-from tqdm import tqdm
+
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import Playwright, sync_playwright
+from tqdm import tqdm
 
 # Things we need to do:
 # 1) Exclude the tiny icon images in the results
