@@ -1,6 +1,5 @@
 import os
 import time
-
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import Playwright, sync_playwright
@@ -11,6 +10,8 @@ from tqdm import tqdm
 # 2) Figure out a way to specify how many images we want, then get PlayWright
 # to scroll down the page to load more images before or while we grab their
 # img tags
+# 3) Figure out a way to sequentially name files, eg: [user_input_text]_1.jpg,
+# [user_input_text]_2.jpg, etc
 
 user_input_text = input("Enter your image selection: ")
 folder_name = user_input_text.replace(" ", "_")
@@ -54,7 +55,7 @@ def run(playwright: Playwright) -> None:
 
 with sync_playwright() as playwright:
     img_srcs = run(playwright)
-
+print("Downloading images...")
 for img in tqdm(img_srcs):
     r = requests.get(img)
     filename = img.split("/")[-1]
