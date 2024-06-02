@@ -1,35 +1,44 @@
-from playwright.sync_api import Playwright, sync_playwright, expect
-from bs4 import BeautifulSoup
 import time
 
+import requests
+from bs4 import BeautifulSoup
+from playwright.sync_api import Playwright, sync_playwright
+
+#Things we need to do:
+#1) Figure out how to take user input to search for images
+#2) Create a folder based off the image search, eg: 'red_car'
+#3) Create filenames based off the image search, eg: 'red_car_1.jpg'
+#4) Store the files in the folder
 def extract_alt_text(html_content):
-    soup = BeautifulSoup(html_content, 'html.parser')
-    img_tags = soup.find_all('img', alt=True)
-    alt_texts = [img.get('alt', '') for img in img_tags]
+    soup = BeautifulSoup(html_content, "html.parser")
+    img_tags = soup.find_all("img", src=True)
+    alt_texts = [img.get("src", "") for img in img_tags]
+    #This line gets us the high resolution images
+    alt_texts = [sub.replace("236x", "736x") for sub in alt_texts]
     return alt_texts
 
-#great success - plan is to add img alts to a list and then iterate through them
-# with a function that clicks into them, downloads the image and then resets
-# the local storage unauth download to 0 (so we can have unlimited downloads)
-# also want to simulate scrolling down so we can load more images - because
-# pinterest has lazy loading.
+
 def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://www.pinterest.com.au/search/pins/?q=2%20tier%20wedding%20cake%20blue")
+    page.goto(
+        "https://www.pinterest.com.au/search/pins/?q=2%20tier%20wedding%20cake%20blue"
+    )
     page.wait_for_load_state()
     time.sleep(5)
     content = page.content()
     alt_texts = extract_alt_text(content)
-    print(alt_texts)
-    time.sleep(200)
-    #using time.sleep to encourage more loading since wait_for_load_state doesn't seem sufficient
-
     context.close()
     browser.close()
+    return alt_texts
 
 
 with sync_playwright() as playwright:
-    run(playwright)
+    alt_texts = run(playwright)
 
+for img in alt_texts:
+    r = requests.get(img)
+    filename = img.split("/")[-1]
+    with open(filename, "wb") as file:
+        file.write(r.content)
