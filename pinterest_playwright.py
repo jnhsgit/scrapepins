@@ -20,7 +20,7 @@ url = f"https://www.pinterest.com.au/search/pins/?q={user_input_transformed}"
 
 folder = f"{folder_name}"
 if not os.path.exists(f"{folder_name}"):
-    print(f"{folder_name} has been created. Your image will be stored here")
+    print(f"{folder_name} folder has been created. Your images will be stored here.")
     os.makedirs(f"{folder_name}")
 
 
